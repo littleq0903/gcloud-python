@@ -9,6 +9,10 @@ class Dataset(object):
     def id(self):
         return self._id
 
+    @property
+    def path(self):
+        return '/datasets/%s' % self._id
+
     @classmethod
     def from_dict(cls, dataset_dict, connection=None):
         return cls(connection=connection, id=dataset_dict['id'])
