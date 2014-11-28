@@ -3,6 +3,8 @@ import urllib
 
 from gcloud import connection
 from gcloud.bigquery import exceptions
+from gcloud.bigquery.iterator import Iterator
+from gcloud.bigquery.dataset import Dataset
 
 class Connection(connection.Connection):
     API_VERSION = 'v2'
@@ -89,9 +91,14 @@ class Connection(connection.Connection):
     def get_all_datasets(self):
         return list(self)
 
-        
-from gcloud.bigquery.iterator import Iterator
-from gcloud.bigquery.dataset import Dataset
+    def get_dataset(self, dataset_id):
+        dataset = self.new_dataset(dataset_id)
+        response = self.api_request(method='GET', path=dataset.path)
+        return Dataset.from_dict(response, connection=self)
+
+    def new_dataset(self, dataset_id):
+        return Dataset(connection=self, id=dataset_id)
+
 
 class _DatasetIterator(Iterator):
     def __init__(self, connection):
