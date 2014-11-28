@@ -2,8 +2,9 @@ import json
 import urllib
 
 from gcloud import connection
+from gcloud.bigquery import exceptions
 
-class Connection(connection.Conection):
+class Connection(connection.Connection):
     API_VERSION = 'v2'
 
     API_URL_TEMPLATE = '{api_base_url}/bigquery/{api_version}/projects/{project}{path}'
@@ -12,9 +13,13 @@ class Connection(connection.Conection):
         super(Connection, self).__init__(*args, **kwargs)
         self.project = project
 
+    def __iter__(self):
+        return iter(_DatasetIterator(connection=self))
+
     def build_api_url(self, path, query_params=None, api_base_url=None,
                       api_version=None):
         url = self.API_URL_TEMPLATE.format(
+                project=self.project,
                 api_base_url=(api_base_url or self.API_BASE_URL),
                 api_version=(api_version or self.API_VERSION),
                 path=path)
@@ -70,7 +75,8 @@ class Connection(connection.Conection):
             method=method, url=url, data=data, content_type=content_type)
 
         if not 200 <= response.status < 300:
-            raise exceptions.make_exception(response, content)
+            raise Exception('not 200 <= response.status < 300')
+            # raise exceptions.make_exception(response, content)
 
         if content and expect_json:
             content_type = response.get('content-type', '')
@@ -80,5 +86,18 @@ class Connection(connection.Conection):
 
         return content
 
-        
+    def get_all_datasets(self):
+        return list(self)
 
+        
+from gcloud.bigquery.iterator import Iterator
+from gcloud.bigquery.dataset import Dataset
+
+class _DatasetIterator(Iterator):
+    def __init__(self, connection):
+        super(_DatasetIterator, self).__init__(connection=connection, path='/datasets')
+
+    def get_items_from_response(self, response):
+
+        for item in response.get('datasets', []):
+            yield Dataset.from_dict(item, connection=self.connection)
