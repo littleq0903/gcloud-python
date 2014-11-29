@@ -5,29 +5,27 @@ from gcloud import connection
 from gcloud.bigquery import exceptions
 from gcloud.bigquery.iterator import Iterator
 from gcloud.bigquery.dataset import Dataset
+from gcloud.bigquery.project import Project
 
 class Connection(connection.Connection):
     API_VERSION = 'v2'
 
-    API_URL_TEMPLATE = '{api_base_url}/bigquery/{api_version}/projects/{project}{path}'
+    API_URL_TEMPLATE = '{api_base_url}/bigquery/{api_version}{path}'
 
-    def __init__(self, project, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(Connection, self).__init__(*args, **kwargs)
-        self.project = project
 
     def __iter__(self):
-        return iter(_DatasetIterator(connection=self))
+        return iter(_ProjectIterator(connection=self))
 
     def build_api_url(self, path, query_params=None, api_base_url=None,
                       api_version=None):
         url = self.API_URL_TEMPLATE.format(
-                project=self.project,
                 api_base_url=(api_base_url or self.API_BASE_URL),
                 api_version=(api_version or self.API_VERSION),
                 path=path)
 
         query_params = query_params = {}
-        query_params.update({'project': self.project})
         url += '?' + urllib.urlencode(query_params)
 
         return url
@@ -77,6 +75,7 @@ class Connection(connection.Connection):
             method=method, url=url, data=data, content_type=content_type)
 
         if not 200 <= response.status < 300:
+            import ipdb; ipdb.set_trace()
             raise Exception('not 200 <= response.status < 300')
             # raise exceptions.make_exception(response, content)
 
@@ -88,23 +87,24 @@ class Connection(connection.Connection):
 
         return content
 
-    def get_all_datasets(self):
+    def get_all_projects(self):
         return list(self)
 
-    def get_dataset(self, dataset_id):
-        dataset = self.new_dataset(dataset_id)
+    # Dataset getter
+    def get_dataset(self, project_id, dataset_id):
+        dataset = self.new_dataset(project_id, dataset_id)
         response = self.api_request(method='GET', path=dataset.path)
         return Dataset.from_dict(response, connection=self)
 
-    def new_dataset(self, dataset_id):
-        return Dataset(connection=self, id=dataset_id)
+    def new_dataset(self, project_id, dataset_id):
+        return Dataset(connection=self, project=project_id, id=dataset_id)
 
 
-class _DatasetIterator(Iterator):
+class _ProjectIterator(Iterator):
     def __init__(self, connection):
-        super(_DatasetIterator, self).__init__(connection=connection, path='/datasets')
+        super(_ProjectIterator, self).__init__(connection=connection, path='/projects')
 
     def get_items_from_response(self, response):
+        for item in response.get('projects', []):
+            yield Project.from_dict(item, connection=self.connection)
 
-        for item in response.get('datasets', []):
-            yield Dataset.from_dict(item, connection=self.connection)

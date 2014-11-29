@@ -18,16 +18,20 @@ SCOPE = (
     'https://www.googleapis.com/auth/devstorage.read_write'
     )
 
-def get_connection(project, client_email, private_key_path):
+
+def get_connection(client_email, private_key_path):
     from gcloud import credentials
     from gcloud.bigquery.connection import Connection
 
     svc_account_credentials = credentials.get_for_service_account(
         client_email, private_key_path, scope=SCOPE)
-    return Connection(project, credentials=svc_account_credentials)
+    return Connection(credentials=svc_account_credentials)
 
+def get_project(project_id, client_email, private_key_path):
+    connection = get_connection(client_email, private_key_path)
+    return connection.get_project(project_id)
 
-def get_dataset(dataset_id, project, client_email, private_key_path):
-    connection = get_connection(project, client_email, private_key_path)
-    return connection.get_dataset(dataset_id)
+def get_dataset(dataset_id, project_id, client_email, private_key_path):
+    connection = get_connection(client_email, private_key_path)
+    return connection.get_dataset(project_id, dataset_id)
 
