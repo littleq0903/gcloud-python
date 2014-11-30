@@ -3,6 +3,7 @@ from gcloud.bigquery.iterator import Iterator
 
 
 class _DatasetIterator(Iterator):
+
     def __init__(self, project, connection):
         super(_DatasetIterator, self).__init__(connection=connection, path='/projects/%s/datasets' % (project))
 
@@ -12,6 +13,7 @@ class _DatasetIterator(Iterator):
 
 
 class Project(object):
+
     def __init__(self, id, connection=None):
         # connection
         self._connection = connection
@@ -46,4 +48,3 @@ class Project(object):
 
     def get_all_datasets(self):
         return list(self)
-

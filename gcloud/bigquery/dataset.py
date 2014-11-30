@@ -1,4 +1,8 @@
+from gcloud.bigquery.project import Project
+
+
 class Dataset(object):
+
     def __init__(self, project, id, connection=None):
         """ A class representing a Dataset on Google BigQuery
         :type project: :class:`gcloud.bigquery.dataset.Dataset`

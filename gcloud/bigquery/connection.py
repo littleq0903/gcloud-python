@@ -1,11 +1,13 @@
 import json
 import urllib
 
+
 from gcloud import connection
 from gcloud.bigquery import exceptions
 from gcloud.bigquery.iterator import Iterator
 from gcloud.bigquery.dataset import Dataset
 from gcloud.bigquery.project import Project
+
 
 class Connection(connection.Connection):
     API_VERSION = 'v2'
@@ -21,9 +23,9 @@ class Connection(connection.Connection):
     def build_api_url(self, path, query_params=None, api_base_url=None,
                       api_version=None):
         url = self.API_URL_TEMPLATE.format(
-                api_base_url=(api_base_url or self.API_BASE_URL),
-                api_version=(api_version or self.API_VERSION),
-                path=path)
+            api_base_url=(api_base_url or self.API_BASE_URL),
+            api_version=(api_version or self.API_VERSION),
+            path=path)
 
         query_params = query_params = {}
         url += '?' + urllib.urlencode(query_params)
@@ -75,7 +77,6 @@ class Connection(connection.Connection):
             method=method, url=url, data=data, content_type=content_type)
 
         if not 200 <= response.status < 300:
-            import ipdb; ipdb.set_trace()
             raise Exception('not 200 <= response.status < 300')
             # raise exceptions.make_exception(response, content)
 
@@ -101,10 +102,10 @@ class Connection(connection.Connection):
 
 
 class _ProjectIterator(Iterator):
+
     def __init__(self, connection):
         super(_ProjectIterator, self).__init__(connection=connection, path='/projects')
 
     def get_items_from_response(self, response):
         for item in response.get('projects', []):
             yield Project.from_dict(item, connection=self.connection)
-
